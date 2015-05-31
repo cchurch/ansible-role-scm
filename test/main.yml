@@ -42,7 +42,12 @@
       scm_type: svn
       scm_url: "{{svn_public_url}}"
       scm_target_path: "{{svn_public_path}}"
-      scm_notify_on_updated: "svn public handler"
+      scm_notify_on_updated: "svn public handler initial"
+    - role: cchurch.scm
+      scm_type: svn
+      scm_url: "{{svn_public_url}}"
+      scm_target_path: "{{svn_public_path}}"
+      scm_notify_on_updated: "svn public handler no change"
   handlers:
     - name: git public handler initial
       set_fact:
@@ -69,9 +74,12 @@
     - name: git public handler back to default
       set_fact:
         git_public_notified_back_to_default: true
-    - name: svn public handler
+    - name: svn public handler initial
       set_fact:
-        svn_public_notified: true
+        svn_public_notified_initial: true
+    - name: svn public handler no change
+      set_fact:
+        svn_public_notified_no_change: true
 
 - hosts: all
   tasks:
@@ -87,5 +95,6 @@
       when: git_public_url is defined
     - assert:
         that:
-          - svn_public_notified
+          - svn_public_notified_initial
+          - svn_public_notified_no_change is not defined
       when: svn_public_url is defined
