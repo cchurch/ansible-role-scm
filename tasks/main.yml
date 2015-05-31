@@ -1,0 +1,65 @@
+---
+
+- name: initialize default variables
+  set_fact:
+    scm_url: '{{scm_url|mandatory}}'
+    scm_target_user: '{{scm_target_user|default(ansible_ssh_user,true)}}'
+    scm_target_path: '{{scm_target_path|default("~/src",true)}}'
+
+- name: install system package for scm client
+  action:
+    module: '{{ansible_pkg_mgr}}'
+    name: '{{scm_packages[ansible_pkg_mgr][scm_type]}}'
+    state: present
+  when: 'scm_packages[ansible_pkg_mgr][scm_type] is defined'
+
+- name: create user for scm checkout
+  user: 
+    name: '{{scm_target_user}}'
+    home: '{{scm_target_user_home|default(omit,true)}}'
+    state: present
+  when: scm_target_user != ansible_ssh_user
+
+- name: delete scm target path before update
+  file:
+    path: '{{scm_target_path}}'
+    state: absent
+  sudo: yes
+  sudo_user: '{{scm_target_user}}'
+  when: scm_delete_on_update|default(false)
+
+- name: update using git
+  git:
+    dest: '{{scm_target_path}}'
+    repo: '{{scm_url}}'
+    version: '{{scm_version|default(omit,true)}}'
+    force: '{{scm_force|bool}}'
+    accept_hostkey: '{{scm_accept_hostkey|bool}}'
+  sudo: yes
+  sudo_user: '{{scm_target_user}}'
+  when: scm_type == 'git'
+  notify: '{{scm_notify_on_updated|default("scm default handler",true)}}'
+
+- name: update using hg
+  hg:
+    dest: '{{scm_target_path}}'
+    repo: '{{scm_url}}'
+    revision: '{{scm_version|default(omit,true)}}'
+    force: '{{scm_force|bool}}'
+  sudo: yes
+  sudo_user: '{{scm_target_user}}'
+  when: scm_type == 'hg'
+  notify: '{{scm_notify_on_updated|default("scm default handler",true)}}'
+
+- name: update using svn
+  subversion:
+    dest: '{{scm_target_path}}'
+    repo: '{{scm_url}}'
+    revision: '{{scm_version|default(omit,true)}}'
+    force: '{{scm_force|bool}}'
+    username: '{{scm_username|default(omit,true)}}'
+    password: '{{scm_password|default(omit,true)}}'
+  sudo: yes
+  sudo_user: '{{scm_target_user}}'
+  when: scm_type == 'svn'
+  notify: '{{scm_notify_on_updated|default("scm default handler",true)}}'

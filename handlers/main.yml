@@ -1,0 +1,5 @@
+---
+
+- name: scm default handler
+  debug:
+    msg: "Updated {{scm_target_path}} from {{scm_url}} using {{scm_type}}."

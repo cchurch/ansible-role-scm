@@ -1,0 +1,31 @@
+---
+
+# git|hg|svn
+scm_type: git
+
+# http://server/repo or ssh://server/repo
+#scm_url: ''
+
+# branch/tag/revision/commit
+#scm_version: 'master'
+
+# true/false, pass force option to scm module
+scm_force: false
+
+# true/false, completely delete scm_target_path before update
+scm_delete_on_update: false
+
+# only for svn
+#scm_username: ''
+
+# only for svn
+#scm_password: ''
+
+# true/false, only for git
+scm_accept_hostkey: true
+
+#scm_target_user: ''
+#scm_target_user_home: ''
+#scm_target_path: '~/src'
+
+#scm_notify_on_updated: ''
