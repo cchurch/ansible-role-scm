@@ -1,4 +1,4 @@
-[![Build Status](http://img.shields.io/travis/cchurch/ansible-role-scm.svg)](https://travis-ci.org/cchurch/ansible-role/scm)
+[![Build Status](http://img.shields.io/travis/cchurch/ansible-role-scm.svg)](https://travis-ci.org/cchurch/ansible-role-scm)
 [![Galaxy](http://img.shields.io/badge/galaxy-cchurch.scm-blue.svg)](https://galaxy.ansible.com/list#/roles/3985)
 
 SCM
