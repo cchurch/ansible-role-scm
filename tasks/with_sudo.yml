@@ -1,6 +1,6 @@
 ---
 
-- name: delete scm target path before update
+- name: delete scm target path before update with sudo
   file:
     path: '{{scm_target_path}}'
     state: absent
@@ -8,7 +8,7 @@
   sudo: yes
   sudo_user: '{{scm_target_user}}'
 
-- name: update using git
+- name: update using git with sudo
   git:
     dest: '{{scm_target_path}}'
     repo: '{{scm_url}}'
@@ -20,7 +20,7 @@
   sudo_user: '{{scm_target_user}}'
   notify: '{{scm_notify_on_updated|default("scm default handler",true)}}'
 
-- name: update using hg
+- name: update using hg with sudo
   hg:
     dest: '{{scm_target_path}}'
     repo: '{{scm_url}}'
@@ -31,7 +31,7 @@
   sudo_user: '{{scm_target_user}}'
   notify: '{{scm_notify_on_updated|default("scm default handler",true)}}'
 
-- name: update using svn
+- name: update using svn with sudo
   subversion:
     dest: '{{scm_target_path}}'
     repo: '{{scm_url}}'

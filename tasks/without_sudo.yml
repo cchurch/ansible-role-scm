@@ -1,12 +1,12 @@
 ---
 
-- name: delete scm target path before update
+- name: delete scm target path before update without sudo
   file:
     path: '{{scm_target_path}}'
     state: absent
   when: scm_delete_on_update|default(false)
 
-- name: update using git
+- name: update using git without sudo
   git:
     dest: '{{scm_target_path}}'
     repo: '{{scm_url}}'
@@ -16,7 +16,7 @@
   when: scm_type == 'git'
   notify: '{{scm_notify_on_updated|default("scm default handler",true)}}'
 
-- name: update using hg
+- name: update using hg without sudo
   hg:
     dest: '{{scm_target_path}}'
     repo: '{{scm_url}}'
@@ -25,7 +25,7 @@
   when: scm_type == 'hg'
   notify: '{{scm_notify_on_updated|default("scm default handler",true)}}'
 
-- name: update using svn
+- name: update using svn without sudo
   subversion:
     dest: '{{scm_target_path}}'
     repo: '{{scm_url}}'
