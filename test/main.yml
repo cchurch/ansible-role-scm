@@ -14,6 +14,10 @@
       file:
         path: "{{checkout_path}}"
         state: absent
+    - assert:
+        that:
+          - ansible_sudo is not defined
+          - ansible_sudo_user is not defined
   roles:
     - role: cchurch.scm
       scm_url: "{{git_public_url}}"
@@ -83,6 +87,10 @@
 
 - hosts: all
   tasks:
+    - assert:
+        that:
+          - ansible_sudo is not defined
+          - ansible_sudo_user is not defined
     - assert:
         that:
           - git_public_notified_initial
