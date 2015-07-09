@@ -20,5 +20,10 @@
     state: present
   when: scm_target_user != ansible_ssh_user
 
-- name: run included tasks with sudo depending on scm_target_user
-  include: 'with{% if scm_target_user == ansible_ssh_user %}out{% endif %_sudo.yml'
+- name: run included tasks with sudo
+  include: 'with_sudo.yml'
+  when: scm_target_user != ansible_ssh_user
+
+- name: run included tasks without sudo
+  include: 'without_sudo.yml'
+  when: scm_target_user == ansible_ssh_user
