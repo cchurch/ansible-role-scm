@@ -1,0 +1,149 @@
+---
+
+# On OSX, may need to run the following so docker containers are reachable:
+# sudo /sbin/route -n add -net 172.17.0.0 -netmask 255.255.0.0 -gateway $(docker-machine ip virtualbox)
+
+- name: setup docker containers
+  include: setup.yml
+
+- name: setup for tests
+  hosts: docker_containers
+  vars:
+    test_scm_users:
+      - user: root
+        path: /root
+      - user: admin
+        path: /home/admin
+      - user: scm
+        path: /home/scm
+  tasks:
+    - name: install epel6 repository for centos6
+      shell: >
+        test 1 && rpm -q epel-release ||
+        rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+      register: epel_result
+      changed_when: "'not installed' in epel_result.stdout"
+      when: inventory_hostname|search('_centos6')
+    - name: make sure sudo is installed
+      action:
+        module: '{{ansible_pkg_mgr}}'
+        name: sudo
+        state: present
+    - name: remove checkout path
+      file:
+        path: '~/test_scm'
+        state: absent
+    - name: create admin user to test become capabilities
+      user:
+        name: admin
+        createhome: true
+        home: /home/admin
+        password: '$6$8yuM3YVsSYTjtPr$b742a/sSdpKpyuC9J7L2fHRrV1pUtHeJuUj6KrjQ7UsHRrT8ffvqnoUutJLVqIArHnm3/0GtF5DH5hnLn8rJo1'
+        groups: '{% if ansible_os_family == "RedHat" %}wheel{% else %}sudo{% endif %}'
+    - name: make sure admin can sudo for centos
+      copy:
+        content: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        dest: /etc/sudoers.d/sudo_wheel
+        mode: 0440
+        owner: root
+        group: root
+      when: inventory_hostname|search('_centos')
+    - name: create scm user to test become capabilities
+      user:
+        name: scm
+        createhome: yes
+        home: /home/scm
+        password: '$6$8yuM3YVsSYTjtPr$b742a/sSdpKpyuC9J7L2fHRrV1pUtHeJuUj6KrjQ7UsHRrT8ffvqnoUutJLVqIArHnm3/0GtF5DH5hnLn8rJo1'
+    - name: ensure user .ssh directories exist
+      file:
+        path: '{{item.path}}/.ssh'
+        owner: '{{item.user}}'
+        mode: 0700
+        state: directory
+      with_items: '{{test_scm_users}}'
+    - name: add private ssh key for testing ssh access to scm
+      copy:
+        src: deployment
+        dest: '{{item.path}}/.ssh/id_rsa'
+        owner: '{{item.user}}'
+        mode: 0600
+        force: false
+      with_items: '{{test_scm_users}}'
+
+- name: set facts for testing git https support as root
+  hosts: docker_containers
+  gather_facts: false
+  tasks:
+    - set_fact:
+        test_scm_name: git-https
+        test_scm_type: git
+        test_scm_url: https://github.com/cchurch/ansible-role-scm.git
+        test_scm_path: ~/test_scm/git-https
+        test_scm_version: master
+        test_scm_alt_version: 9d511d6b720ee40af86a050e9bf3f8a966ac4ec8
+
+- name: test git https support as root
+  include: test_scm.yml
+
+- name: set facts for testing git ssh support as root
+  hosts: docker_containers
+  gather_facts: false
+  tasks:
+    - set_fact:
+        test_scm_name: git-ssh
+        test_scm_type: git
+        test_scm_url: git@github.com:cchurch/ansible-role-scm.git
+        test_scm_path: ~/test_scm/git-ssh
+        test_scm_version: master
+        test_scm_alt_version: 0.3.0
+
+- name: test git ssh support as root
+  include: test_scm.yml
+
+- name: set facts for testing hg https support as root
+  hosts: docker_containers
+  gather_facts: false
+  tasks:
+    - set_fact:
+        test_scm_name: hg-https
+        test_scm_type: hg
+        test_scm_url: https://bitbucket.org/cchurch/django-hotrunner
+        test_scm_path: ~/test_scm/hg-https
+        test_scm_version: default
+        test_scm_alt_version: 3a22629b18529f05ca64428804bb6b0737733fd8
+
+- name: test hg https support as root
+  include: test_scm.yml
+
+- name: set facts for testing hg ssh support as root
+  hosts: docker_containers
+  gather_facts: false
+  tasks:
+    - set_fact:
+        test_scm_name: hg-ssh
+        test_scm_type: hg
+        test_scm_url: ssh://hg@bitbucket.org/cchurch/django-hotrunner
+        test_scm_path: ~/test_scm/hg-ssh
+        test_scm_version: default
+        test_scm_alt_version: 0.1.0
+
+#- name: test hg ssh support as root
+#  include: test_scm.yml
+
+- name: set facts for testing svn https support as root
+  hosts: docker_containers
+  gather_facts: false
+  tasks:
+    - set_fact:
+        test_scm_name: svn-https
+        test_scm_type: svn
+        test_scm_url: https://github.com/cchurch/ansible-sign/trunk
+        test_scm_path: ~/test_scm/svn-https
+        test_scm_version: HEAD
+        test_scm_alt_version: r2
+
+- name: test svn https support as root
+  include: test_scm.yml
+
+- name: cleanup docker containers
+  include: cleanup.yml

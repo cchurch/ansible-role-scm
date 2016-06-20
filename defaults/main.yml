@@ -26,6 +26,7 @@ scm_accept_hostkey: true
 
 #scm_target_user: ''
 #scm_target_user_home: ''
+scm_targer_user_shell: '/bin/bash'
 #scm_target_path: '~/src'
 
 #scm_notify_on_updated: ''

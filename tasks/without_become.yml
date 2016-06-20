@@ -1,34 +1,34 @@
 ---
 
-- name: delete scm target path before update without sudo
+- name: delete scm target path before update without become
   file:
-    path: '{{scm_target_path}}'
+    path: '{{_scm_target_path}}'
     state: absent
   when: scm_delete_on_update|default(false)
 
-- name: update using git without sudo
+- name: update using git without become
   git:
-    dest: '{{scm_target_path}}'
-    repo: '{{scm_url}}'
+    dest: '{{_scm_target_path}}'
+    repo: '{{_scm_url}}'
     version: '{{scm_version|default(omit,true)}}'
     force: '{{scm_force|bool}}'
     accept_hostkey: '{{scm_accept_hostkey|bool}}'
   when: scm_type == 'git'
   notify: '{{scm_notify_on_updated|default("scm default handler",true)}}'
 
-- name: update using hg without sudo
+- name: update using hg without become
   hg:
-    dest: '{{scm_target_path}}'
-    repo: '{{scm_url}}'
+    dest: '{{_scm_target_path}}'
+    repo: '{{_scm_url}}'
     revision: '{{scm_version|default(omit,true)}}'
     force: '{{scm_force|bool}}'
   when: scm_type == 'hg'
   notify: '{{scm_notify_on_updated|default("scm default handler",true)}}'
 
-- name: update using svn without sudo
+- name: update using svn without become
   subversion:
-    dest: '{{scm_target_path}}'
-    repo: '{{scm_url}}'
+    dest: '{{_scm_target_path}}'
+    repo: '{{_scm_url}}'
     revision: '{{scm_version|default(omit,true)}}'
     force: '{{scm_force|bool}}'
     username: '{{scm_username|default(omit,true)}}'

@@ -1,0 +1,87 @@
+---
+
+- name: test scm role
+  hosts: docker_containers
+  serial: 2
+  pre_tasks:
+    - name: ensure needed variables are defined
+      assert:
+        that:
+          - test_scm_name is defined
+          - test_scm_type is defined
+          - test_scm_url is defined
+          - test_scm_path is defined
+          - test_scm_version is defined
+          - test_scm_alt_version is defined
+    - name: remove scm path
+      file:
+        path: "{{test_scm_path}}"
+        state: absent
+  roles:
+    - role: cchurch.scm
+      scm_type: '{{test_scm_type}}'
+      scm_url: '{{test_scm_url}}'
+      scm_target_path: '{{test_scm_path}}'
+      scm_notify_on_updated: test scm handler initial
+    - role: cchurch.scm
+      scm_type: '{{test_scm_type}}'
+      scm_url: '{{test_scm_url}}'
+      scm_target_path: '{{test_scm_path}}'
+      scm_notify_on_updated: test scm handler no change
+    - role: cchurch.scm
+      scm_type: '{{test_scm_type}}'
+      scm_url: '{{test_scm_url}}'
+      scm_target_path: '{{test_scm_path}}'
+      scm_delete_on_update: true
+      scm_notify_on_updated: test scm handler delete on update
+    - role: cchurch.scm
+      scm_type: '{{test_scm_type}}'
+      scm_url: '{{test_scm_url}}'
+      scm_target_path: '{{test_scm_path}}'
+      scm_version: '{{test_scm_alt_version}}'
+      scm_notify_on_updated: test scm handler version change
+    - role: cchurch.scm
+      scm_type: '{{test_scm_type}}'
+      scm_url: '{{test_scm_url}}'
+      scm_target_path: '{{test_scm_path}}'
+      scm_version: '{{test_scm_version}}'
+      scm_notify_on_updated: test scm handler back to default
+  handlers:
+    - name: test scm handler initial
+      set_fact:
+        test_scm_notified_initial: '{{test_scm_name}}'
+      changed_when: true
+      notify:
+        - test scm handler foo
+        - test scm handler bar
+    - name: test scm handler foo
+      set_fact:
+        test_scm_notified_foo: '{{test_scm_name}}'
+    - name: test scm handler bar
+      set_fact:
+        test_scm_notified_bar: '{{test_scm_name}}'
+    - name: test scm handler no change
+      set_fact:
+        test_scm_notified_no_change: '{{test_scm_name}}'
+    - name: test scm handler delete on update
+      set_fact:
+        test_scm_notified_delete_on_update: '{{test_scm_name}}'
+    - name: test scm handler version change
+      set_fact:
+        test_scm_notified_version_change: '{{test_scm_name}}'
+    - name: test scm handler back to default
+      set_fact:
+        test_scm_notified_back_to_default: '{{test_scm_name}}'
+
+- name: check that test scm handlers were called
+  hosts: docker_containers
+  tasks:
+    - assert:
+        that:
+          - test_scm_notified_initial == test_scm_name
+          - test_scm_notified_foo == test_scm_name
+          - test_scm_notified_bar == test_scm_name
+          - test_scm_notified_no_change is not defined
+          - test_scm_notified_delete_on_update == test_scm_name
+          - test_scm_notified_version_change == test_scm_name
+          - test_scm_notified_back_to_default == test_scm_name
