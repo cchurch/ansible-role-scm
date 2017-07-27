@@ -120,11 +120,12 @@
   vars_files:
     - roles/cchurch.scm/vars/main.yml
   tasks:
-    - action:
+    - name: remove scm package
+      action:
         module: '{{ansible_pkg_mgr}}'
-        name: '{{scm_packages[ansible_pkg_mgr]["git"]}}'
+        name: '{{scm_default_packages[ansible_pkg_mgr]["git"]}}'
         state: absent
-      when: 'scm_packages[ansible_pkg_mgr]["git"] is defined'
+      when: 'scm_default_packages[ansible_pkg_mgr]["git"] is defined'
 
 - name: set facts for testing git ssh support as admin user
   hosts: containers
