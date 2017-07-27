@@ -1,0 +1,317 @@
+---
+
+
+- name: setup for tests
+  hosts: containers
+  tags: [always]
+  vars:
+    test_scm_users:
+      - user: root
+        path: /root
+      - user: admin
+        path: /home/admin
+      - user: normal
+        path: /home/normal
+  tasks:
+    - name: remove checkout path
+      file:
+        path: '~/test_scm'
+        state: absent
+    - name: create admin user to test become capabilities
+      user:
+        name: admin
+        createhome: true
+        home: /home/admin
+        password: '$6$mnxYfHnlb/$fmJ2m14Yiu3BSCTmh5fAWaK2vytdN3XooKwJ73fEZ0B7IcyWHarWMsDyoJYZJ5CsDxJWXa7P7zgs/WgH5gYAb0'
+        groups: '{% if ansible_os_family == "RedHat" %}wheel{% else %}sudo{% endif %}'
+    - name: create normal user to test become capabilities
+      user:
+        name: normal
+        createhome: true
+        home: /home/normal
+        password: '$6$mnxYfHnlb/$fmJ2m14Yiu3BSCTmh5fAWaK2vytdN3XooKwJ73fEZ0B7IcyWHarWMsDyoJYZJ5CsDxJWXa7P7zgs/WgH5gYAb0'
+    - name: ensure user .ssh directories exist
+      file:
+        path: '{{item.path}}/.ssh'
+        owner: '{{item.user}}'
+        mode: 0700
+        state: directory
+      with_items: '{{test_scm_users}}'
+    - name: add private ssh key for testing ssh access to scm
+      copy:
+        src: deployment
+        dest: '{{item.path}}/.ssh/id_rsa'
+        owner: '{{item.user}}'
+        mode: 0600
+        force: false
+      with_items: '{{test_scm_users}}'
+    - name: save original username and password
+      set_fact:
+        original_user: '{{ansible_user|default(ansible_ssh_user)}}'
+        original_pass: '{{ansible_password|default(ansible_ssh_pass)|default("")}}'
+
+- name: set facts for testing git ssh support as root user
+  hosts: containers
+  gather_facts: false
+  tags: [git, ssh, root, git-ssh, git-ssh-root]
+  tasks:
+    - set_fact:
+        ansible_user: '{{original_user}}'
+        ansible_pass: '{{original_pass}}'
+        test_scm_name: git-ssh
+        test_scm_type: git
+        test_scm_url: git@github.com:cchurch/ansible-role-scm.git
+        test_scm_path: ~/test_scm/git-ssh
+        test_scm_target_user: ''
+        test_scm_target_user_home: ''
+        test_scm_version: master
+        test_scm_alt_version: 0.3.0
+
+- name: test git ssh support as root user
+  tags: [git, ssh, root, git-ssh, git-ssh-root]
+  include: test_scm.yml
+
+- name: set facts for testing git ssh support as root user to admin user
+  hosts: containers
+  gather_facts: false
+  tags: [git, ssh, root, admin, git-ssh, git-ssh-root-admin]
+  tasks:
+    - set_fact:
+        ansible_user: '{{original_user}}'
+        ansible_pass: '{{original_pass}}'
+        test_scm_name: git-ssh
+        test_scm_type: git
+        test_scm_url: git@github.com:cchurch/ansible-role-scm.git
+        test_scm_path: /home/admin/test_root/git-ssh
+        test_scm_target_user: admin
+        test_scm_target_user_home: ''
+        test_scm_version: master
+        test_scm_alt_version: 0.3.0
+
+- name: test git ssh support as root user to admin user
+  tags: [git, ssh, root, admin, git-ssh, git-ssh-root-admin]
+  include: test_scm.yml
+
+- name: set facts for testing git ssh support as root user to normal user
+  hosts: containers
+  gather_facts: false
+  tags: [git, ssh, root, normal, git-ssh, git-ssh-root-normal]
+  tasks:
+    - set_fact:
+        ansible_user: '{{original_user}}'
+        ansible_pass: '{{original_pass}}'
+        test_scm_name: git-ssh
+        test_scm_type: git
+        test_scm_url: git@github.com:cchurch/ansible-role-scm.git
+        test_scm_path: /home/normal/test_root/git-ssh
+        test_scm_target_user: normal
+        test_scm_target_user_home: ''
+        test_scm_version: master
+        test_scm_alt_version: 0.3.0
+
+- name: test git ssh support as root user to normal user
+  tags: [git, ssh, root, normal, git-ssh, git-ssh-root-normal]
+  include: test_scm.yml
+
+- name: remove git to test that admin user can install it
+  hosts: containers
+  gather_facts: false
+  tags: [git, ssh, https, admin, git-ssh, git-https, git-ssh-admin, git-ssh-admin-normal, git-https-admin-another]
+  vars_files:
+    - roles/cchurch.scm/vars/main.yml
+  tasks:
+    - action:
+        module: '{{ansible_pkg_mgr}}'
+        name: '{{scm_packages[ansible_pkg_mgr]["git"]}}'
+        state: absent
+      when: 'scm_packages[ansible_pkg_mgr]["git"] is defined'
+
+- name: set facts for testing git ssh support as admin user
+  hosts: containers
+  gather_facts: false
+  tags: [git, ssh, admin, git-ssh, git-ssh-admin]
+  tasks:
+    - set_fact:
+        ansible_user: admin
+        ansible_pass: scmtest
+        test_scm_name: git-ssh
+        test_scm_type: git
+        test_scm_url: git@github.com:cchurch/ansible-role-scm.git
+        test_scm_path: /home/admin/test_scm/git-ssh
+        test_scm_target_user: ''
+        test_scm_target_user_home: ''
+        test_scm_version: master
+        test_scm_alt_version: 0.3.0
+
+- name: test git ssh support as admin user
+  tags: [git, ssh, admin, git-ssh, git-ssh-admin]
+  include: test_scm.yml
+
+- name: set facts for testing git ssh support as admin user to normal user
+  hosts: containers
+  gather_facts: false
+  tags: [git, ssh, admin, normal, git-ssh, git-ssh-admin-normal]
+  tasks:
+    - set_fact:
+        ansible_user: admin
+        ansible_pass: scmtest
+        test_scm_name: git-ssh
+        test_scm_type: git
+        test_scm_url: git@github.com:cchurch/ansible-role-scm.git
+        test_scm_path: /home/normal/test_admin/git-ssh
+        test_scm_target_user: normal
+        test_scm_target_user_home: ''
+        test_scm_version: master
+        test_scm_alt_version: 0.3.0
+
+- name: test git ssh support as admin user to normal user
+  tags: [git, ssh, admin, normal, git-ssh, git-ssh-admin-normal]
+  include: test_scm.yml
+
+- name: set facts for testing git ssh support as normal user
+  hosts: containers
+  gather_facts: false
+  tags: [git, ssh, normal, git-ssh, git-ssh-normal]
+  tasks:
+    - set_fact:
+        ansible_user: normal
+        ansible_password: scmtest
+        test_scm_name: git-ssh
+        test_scm_type: git
+        test_scm_url: git@github.com:cchurch/ansible-role-scm.git
+        test_scm_path: /home/normal/test_scm/git-ssh
+        test_scm_target_user: ''
+        test_scm_target_user_home: ''
+        test_scm_version: master
+        test_scm_alt_version: 0.3.0
+
+- name: test git ssh support as normal user
+  tags: [git, ssh, normal, git-ssh, git-ssh-normal]
+  include: test_scm.yml
+
+- name: set facts for testing git https support as root user
+  hosts: containers
+  gather_facts: false
+  tags: [git, https, root, git-https, git-https-root]
+  tasks:
+    - set_fact:
+        ansible_user: '{{original_user}}'
+        ansible_password: '{{original_pass}}'
+        test_scm_name: git-https
+        test_scm_type: git
+        test_scm_url: https://github.com/cchurch/ansible-role-scm.git
+        test_scm_path: ~/test_scm/git-https
+        test_scm_target_user: ''
+        test_scm_target_user_home: ''
+        test_scm_version: master
+        test_scm_alt_version: 9d511d6b720ee40af86a050e9bf3f8a966ac4ec8
+
+- name: test git https support as root user
+  tags: [git, https, root, git-https, git-https-root]
+  include: test_scm.yml
+
+- name: set facts for testing git https support as root user to other user
+  hosts: containers
+  gather_facts: false
+  tags: [git, https, root, other, git-https, git-https-root-other]
+  tasks:
+    - set_fact:
+        ansible_user: '{{original_user}}'
+        ansible_pass: '{{original_pass}}'
+        test_scm_name: git-https
+        test_scm_type: git
+        test_scm_url: https://github.com/cchurch/ansible-role-scm.git
+        test_scm_path: /home/other/test_root/git-https
+        test_scm_target_user: other
+        test_scm_target_user_home: /home/other
+        test_scm_version: master
+        test_scm_alt_version: 9d511d6b720ee40af86a050e9bf3f8a966ac4ec8
+
+- name: test git https support as root user to other user
+  tags: [git, https, root, other, git-https, git-https-root-other]
+  include: test_scm.yml
+
+- name: set facts for testing git https support as admin user to another user
+  hosts: containers
+  gather_facts: false
+  tags: [git, https, admin, another, git-https, git-https-admin-another]
+  tasks:
+    - set_fact:
+        ansible_user: admin
+        ansible_pass: scmtest
+        test_scm_name: git-https
+        test_scm_type: git
+        test_scm_url: https://github.com/cchurch/ansible-role-scm.git
+        test_scm_path: /home/another/test_admin/git-https
+        test_scm_target_user: another
+        test_scm_target_user_home: /home/another
+        test_scm_version: master
+        test_scm_alt_version: 9d511d6b720ee40af86a050e9bf3f8a966ac4ec8
+
+- name: test git https support as admin user to another user
+  tags: [git, https, admin, another, git-https, git-https-admin-another]
+  include: test_scm.yml
+
+- name: set facts for testing hg ssh support as root user
+  hosts: containers
+  gather_facts: false
+  tags: [hg, ssh, root, hg-ssh, hg-ssh-root]
+  tasks:
+    - set_fact:
+        ansible_user: '{{original_user}}'
+        ansible_password: '{{original_pass}}'
+        test_scm_name: hg-ssh
+        test_scm_type: hg
+        test_scm_url: ssh://hg@bitbucket.org/cchurch/django-hotrunner
+        test_scm_path: ~/test_scm/hg-ssh
+        test_scm_target_user: ''
+        test_scm_target_user_home: ''
+        test_scm_version: default
+        test_scm_alt_version: 0.1.0
+
+- name: test hg ssh support as root user
+  tags: [hg, ssh, root, hg-ssh, hg-ssh-root]
+  include: test_scm.yml
+  when: false  # Not working yet?
+
+- name: set facts for testing hg https support as root user
+  hosts: containers
+  gather_facts: false
+  tags: [hg, https, root, hg-https, hg-https-root]
+  tasks:
+    - set_fact:
+        ansible_user: '{{original_user}}'
+        ansible_password: '{{original_pass}}'
+        test_scm_name: hg-https
+        test_scm_type: hg
+        test_scm_url: https://bitbucket.org/cchurch/django-hotrunner
+        test_scm_path: ~/test_scm/hg-https
+        test_scm_target_user: ''
+        test_scm_target_user_home: ''
+        test_scm_version: default
+        test_scm_alt_version: 3a22629b18529f05ca64428804bb6b0737733fd8
+
+- name: test hg https support as root user
+  tags: [hg, https, root, hg-https, hg-https-root]
+  include: test_scm.yml
+
+- name: set facts for testing svn https support as root user
+  hosts: containers
+  gather_facts: false
+  tags: [svn, https, root, svn-https, svn-https-root]
+  tasks:
+    - set_fact:
+        ansible_user: '{{original_user}}'
+        ansible_password: '{{original_pass}}'
+        test_scm_name: svn-https
+        test_scm_type: svn
+        test_scm_url: https://github.com/cchurch/ansible-sign/trunk
+        test_scm_path: ~/test_scm/svn-https
+        test_scm_target_user: ''
+        test_scm_target_user_home: ''
+        test_scm_version: HEAD
+        test_scm_alt_version: r2
+
+- name: test svn https support as root user
+  tags: [svn, https, root, svn-https, svn-https-root]
+  include: test_scm.yml

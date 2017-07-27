@@ -1,8 +1,8 @@
 ---
 
-- name: test scm role
-  hosts: docker_containers
-  serial: 2
+- name: check test scm role variables
+  hosts: containers
+  gather_facts: false
   pre_tasks:
     - name: ensure needed variables are defined
       assert:
@@ -13,44 +13,48 @@
           - test_scm_path is defined
           - test_scm_version is defined
           - test_scm_alt_version is defined
-    - name: remove scm path
+    - name: ensure we're running as the right user
+      command: whoami
+      register: test_scm_whoami
+      changed_when: false
+      failed_when: 'test_scm_whoami.stdout != ansible_user|default(ansible_ssh_user)'
+    - name: remove scm path as root or normal user
       file:
         path: "{{test_scm_path}}"
         state: absent
+      when: 'ansible_user == "root" or ansible_user == "normal"'
+    - name: remove scm path admin user
+      file:
+        path: "{{test_scm_path}}"
+        state: absent
+      become: true
+      when: 'ansible_user == "admin"'
+
+- name: test scm role initial checkout
+  hosts: containers
+  gather_facts: false
+  serial: 2  # Workaround error when updating from GitHub via SVN too often.
   roles:
     - role: cchurch.scm
       scm_type: '{{test_scm_type}}'
       scm_url: '{{test_scm_url}}'
       scm_target_path: '{{test_scm_path}}'
+      scm_target_user: '{{test_scm_target_user|default("",true)}}'
+      scm_target_user_home: '{{test_scm_target_user_home|default("",true)}}'
       scm_notify_on_updated: test scm handler initial
-    - role: cchurch.scm
-      scm_type: '{{test_scm_type}}'
-      scm_url: '{{test_scm_url}}'
-      scm_target_path: '{{test_scm_path}}'
-      scm_notify_on_updated: test scm handler no change
-    - role: cchurch.scm
-      scm_type: '{{test_scm_type}}'
-      scm_url: '{{test_scm_url}}'
-      scm_target_path: '{{test_scm_path}}'
-      scm_delete_on_update: true
-      scm_notify_on_updated: test scm handler delete on update
-    - role: cchurch.scm
-      scm_type: '{{test_scm_type}}'
-      scm_url: '{{test_scm_url}}'
-      scm_target_path: '{{test_scm_path}}'
-      scm_version: '{{test_scm_alt_version}}'
-      scm_notify_on_updated: test scm handler version change
-    - role: cchurch.scm
-      scm_type: '{{test_scm_type}}'
-      scm_url: '{{test_scm_url}}'
-      scm_target_path: '{{test_scm_path}}'
-      scm_version: '{{test_scm_version}}'
-      scm_notify_on_updated: test scm handler back to default
+  post_tasks:
+    - name: check variable set by scm update role
+      assert:
+        that:
+          - scm_update_result|success
+          - scm_update_result|changed
+          - not scm_update_result.before
+          - scm_update_result.after
   handlers:
     - name: test scm handler initial
       set_fact:
         test_scm_notified_initial: '{{test_scm_name}}'
-      changed_when: true
+      changed_when: true  # To notify other handlers from the first one.
       notify:
         - test scm handler foo
         - test scm handler bar
@@ -60,23 +64,119 @@
     - name: test scm handler bar
       set_fact:
         test_scm_notified_bar: '{{test_scm_name}}'
+
+- name: test scm role update with no changes
+  hosts: containers
+  gather_facts: false
+  serial: 2
+  roles:
+    - role: cchurch.scm
+      scm_type: '{{test_scm_type}}'
+      scm_url: '{{test_scm_url}}'
+      scm_target_path: '{{test_scm_path}}'
+      scm_target_user: '{{test_scm_target_user|default("",true)}}'
+      scm_target_user_home: '{{test_scm_target_user_home|default("",true)}}'
+      scm_notify_on_updated: test scm handler no change
+  post_tasks:
+    - name: check variable set by scm update role
+      assert:
+        that:
+          - scm_update_result|success
+          - not scm_update_result|changed
+          - scm_update_result.before == scm_update_result.after
+  handlers:
     - name: test scm handler no change
       set_fact:
         test_scm_notified_no_change: '{{test_scm_name}}'
+
+- name: test scm role update with delete on update flag
+  hosts: containers
+  gather_facts: false
+  serial: 2
+  roles:
+    - role: cchurch.scm
+      scm_type: '{{test_scm_type}}'
+      scm_url: '{{test_scm_url}}'
+      scm_target_path: '{{test_scm_path}}'
+      scm_target_user: '{{test_scm_target_user|default("",true)}}'
+      scm_delete_on_update: true
+      scm_target_user_home: '{{test_scm_target_user_home|default("",true)}}'
+      scm_notify_on_updated: test scm handler delete on update
+  post_tasks:
+    - name: check variable set by scm update role
+      assert:
+        that:
+          - scm_update_result|success
+          - scm_update_result|changed
+          - scm_update_result.before != scm_update_result.after
+  handlers:
     - name: test scm handler delete on update
       set_fact:
         test_scm_notified_delete_on_update: '{{test_scm_name}}'
+
+- name: test scm role update with a version change
+  hosts: containers
+  gather_facts: false
+  serial: 2
+  roles:
+    - role: cchurch.scm
+      scm_type: '{{test_scm_type}}'
+      scm_url: '{{test_scm_url}}'
+      scm_target_path: '{{test_scm_path}}'
+      scm_target_user: '{{test_scm_target_user|default("",true)}}'
+      scm_target_user_home: '{{test_scm_target_user_home|default("",true)}}'
+      scm_version: '{{test_scm_alt_version}}'
+      scm_notify_on_updated: test scm handler version change
+  post_tasks:
+    - name: check variable set by scm update role
+      assert:
+        that:
+          - scm_update_result|success
+          - scm_update_result|changed
+          - scm_update_result.before != scm_update_result.after
+  handlers:
     - name: test scm handler version change
       set_fact:
         test_scm_notified_version_change: '{{test_scm_name}}'
+
+- name: test scm role update back to original version
+  hosts: containers
+  gather_facts: false
+  serial: 2
+  roles:
+    - role: cchurch.scm
+      scm_type: '{{test_scm_type}}'
+      scm_url: '{{test_scm_url}}'
+      scm_target_path: '{{test_scm_path}}'
+      scm_target_user: '{{test_scm_target_user|default("",true)}}'
+      scm_target_user_home: '{{test_scm_target_user_home|default("",true)}}'
+      scm_version: '{{test_scm_version}}'
+      scm_notify_on_updated: test scm handler back to default
+  post_tasks:
+    - name: check variable set by scm update role
+      assert:
+        that:
+          - scm_update_result|success
+          - scm_update_result|changed
+          - scm_update_result.before != scm_update_result.after
+  handlers:
     - name: test scm handler back to default
       set_fact:
         test_scm_notified_back_to_default: '{{test_scm_name}}'
 
-- name: check that test scm handlers were called
-  hosts: docker_containers
+- name: check the scm checkout path and that test scm handlers were called
+  hosts: containers
+  gather_facts: false
   tasks:
-    - assert:
+    - name: check that test scm path was created and is owned by the right user
+      stat:
+        path: '{{test_scm_path}}'
+      register: test_scm_path_stat
+      failed_when: 'not test_scm_path_stat.stat.exists or test_scm_path_stat.stat.pw_name != test_scm_target_user|default(ansible_user,true)'
+      become: true
+      when: 'ansible_user == "root" or ansible_user == "admin"'
+    - name: check variables set by handlers
+      assert:
         that:
           - test_scm_notified_initial == test_scm_name
           - test_scm_notified_foo == test_scm_name

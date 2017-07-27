@@ -29,4 +29,6 @@ scm_accept_hostkey: true
 scm_targer_user_shell: '/bin/bash'
 #scm_target_path: '~/src'
 
+scm_packages: '{{scm_default_packages}}'
+
 #scm_notify_on_updated: ''

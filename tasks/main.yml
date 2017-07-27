@@ -5,6 +5,7 @@
     _scm_url: '{{scm_url|mandatory}}'
     _scm_current_user: "{{ansible_ssh_user|default(ansible_user,true)|default(ansible_user_id,true)|default(lookup('env','USER'))|mandatory}}"
     _scm_target_user: "{{scm_target_user|default(ansible_ssh_user,true)|default(ansible_user,true)|default(ansible_user_id,true)|default(lookup('env','USER'))}}"
+    _scm_target_user_home: "{{scm_target_user_home|default('',true)}}"
     _scm_target_path: '{{scm_target_path|default("~/src",true)}}'
 
 - name: install system package for scm client
@@ -13,19 +14,25 @@
     name: '{{scm_packages[ansible_pkg_mgr][scm_type]}}'
     state: present
   when: 'scm_packages[ansible_pkg_mgr][scm_type] is defined'
+  become: yes
+  ignore_errors: yes
 
 - name: create user for scm checkout
   user: 
     name: '{{_scm_target_user}}'
     home: '{{_scm_target_user_home|default(omit,true)}}'
-    shell: '{{_scm_targer_user_shell|default(omit,true)}}'
+    shell: '{{scm_targer_user_shell|default(omit,true)}}'
     state: present
   when: _scm_target_user != _scm_current_user
+  become: yes
+  ignore_errors: yes
 
 - name: run included tasks with become
-  include: 'with_become.yml'
+  include: update.yml
   when: _scm_target_user != _scm_current_user
+  become: yes
+  become_user: '{{_scm_target_user}}'
 
 - name: run included tasks without become
-  include: 'without_become.yml'
+  include: update.yml
   when: _scm_target_user == _scm_current_user

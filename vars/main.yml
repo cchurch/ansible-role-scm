@@ -1,6 +1,6 @@
 ---
 
-scm_packages:
+scm_default_packages:
   yum:
     git: 'git'
     hg: 'mercurial'

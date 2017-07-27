@@ -1,1 +1,20 @@
+[local]
 localhost
+
+[containers]
+scm_centos6 image="centos:6"
+scm_centos7 image="centos:7"
+scm_ubuntu14 image="ubuntu:trusty"
+scm_ubuntu16 image="ubuntu:xenial"
+
+[containers:vars]
+ansible_connection=docker
+ansible_user=root
+
+[centos]
+scm_centos6
+scm_centos7
+
+[ubuntu]
+scm_ubuntu14
+scm_ubuntu16
