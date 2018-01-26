@@ -9,6 +9,10 @@ scm_default_packages:
     git: 'git'
     hg: 'mercurial'
     svn: 'subversion'
+  pacman:
+    git: 'git'
+    hg: 'mercurial'
+    svn: 'subversion'
   macports:
     git: 'git'
     hg: 'mercurial'

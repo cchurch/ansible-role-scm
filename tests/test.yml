@@ -23,7 +23,7 @@
         createhome: true
         home: /home/admin
         password: '$6$mnxYfHnlb/$fmJ2m14Yiu3BSCTmh5fAWaK2vytdN3XooKwJ73fEZ0B7IcyWHarWMsDyoJYZJ5CsDxJWXa7P7zgs/WgH5gYAb0'
-        groups: '{% if ansible_os_family == "RedHat" %}wheel{% else %}sudo{% endif %}'
+        groups: '{% if ansible_os_family == "RedHat" or ansible_os_family == "Archlinux" %}wheel{% else %}sudo{% endif %}'
     - name: create normal user to test become capabilities
       user:
         name: normal

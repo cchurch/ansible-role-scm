@@ -5,17 +5,32 @@ galaxy_info:
   description: Checkout code from SCM (git/hg/svn).
   company: "Nine More Minutes, Inc."
   license: BSD
-  min_ansible_version: 2.0
+  min_ansible_version: 2.1
   platforms:
-    - name: EL
-      versions: ['all']
-    - name: Fedora
-      versions: ['all']
-    - name: Ubuntu
-      versions: ['all']
+    - name: Amazon
+      versions:
+        - '2016.09'
+    - name: ArchLinux
+      versions:
+        - all
     - name: Debian
-      versions: ['all']
-  categories:
+      versions:
+        - wheezy
+        - jessie
+        - stretch
+    - name: EL
+      versions:
+        - '6'
+        - '7'
+    #- name: Fedora
+    #  versions:
+    #    - '25'
+    #    - '26'
+    - name: Ubuntu
+      versions:
+        - trusty
+        - xenial
+  galaxy_tags:
     - development
 allow_duplicates: true
 dependencies: []

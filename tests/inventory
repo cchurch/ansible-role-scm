@@ -1,9 +1,20 @@
 [local]
 localhost
 
+[local:vars]
+ansible_connection=local
+ansible_python_interpreter=/usr/bin/env python
+
 [containers]
+scm_amazon image="amazonlinux:latest"
+scm_arch image="base/archlinux"
 scm_centos6 image="centos:6"
 scm_centos7 image="centos:7"
+scm_debian7 image="debian:wheezy"
+scm_debian8 image="debian:jessie"
+scm_debian9 image="debian:stretch"
+#scm_fedora25 image="fedora:25"
+#scm_fedora26 image="fedora:26"
 scm_ubuntu14 image="ubuntu:trusty"
 scm_ubuntu16 image="ubuntu:xenial"
 
@@ -11,9 +22,27 @@ scm_ubuntu16 image="ubuntu:xenial"
 ansible_connection=docker
 ansible_user=root
 
+[amazon]
+scm_amazon
+
+[arch]
+scm_arch
+
+[arch:vars]
+ansible_python_interpreter=/usr/bin/python2
+
 [centos]
 scm_centos6
 scm_centos7
+
+[debian]
+scm_debian7
+scm_debian8
+scm_debian9
+
+#[fedora]
+#scm_fedora25
+#scm_fedora26
 
 [ubuntu]
 scm_ubuntu14
