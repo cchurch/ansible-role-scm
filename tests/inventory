@@ -31,19 +31,40 @@ scm_arch
 [arch:vars]
 ansible_python_interpreter=/usr/bin/python2
 
-[centos]
+[centos:children]
+centos6
+centos7
+
+[centos6]
 scm_centos6
+
+[centos7]
 scm_centos7
 
-[debian]
+[debian:children]
+debian7
+debian8
+debian9
+
+[debian7]
 scm_debian7
+
+[debian8]
 scm_debian8
+
+[debian9]
 scm_debian9
 
 #[fedora]
 #scm_fedora25
 #scm_fedora26
 
-[ubuntu]
+[ubuntu:children]
+ubuntu14
+ubuntu16
+
+[ubuntu14]
 scm_ubuntu14
+
+[ubuntu16]
 scm_ubuntu16
