@@ -1,38 +1,51 @@
 ---
 
-- name: initialize default variables
+- name: determine current remote user
+  command: whoami
+  register: _scm_whoami_result
+  changed_when: false
+  check_mode: false
+
+- name: determine current user vs. actual user
   set_fact:
-    _scm_url: '{{scm_url|mandatory}}'
-    _scm_current_user: "{{ansible_ssh_user|default(ansible_user,true)|default(ansible_user_id,true)|default(lookup('env','USER'))|mandatory}}"
-    _scm_target_user: "{{scm_target_user|default(ansible_ssh_user,true)|default(ansible_user,true)|default(ansible_user_id,true)|default(lookup('env','USER'))}}"
-    _scm_target_user_home: "{{scm_target_user_home|default('',true)}}"
-    _scm_target_path: '{{scm_target_path|default("~/src",true)}}'
+    _scm_current_user: "{{ ansible_user | default(ansible_ssh_user, true) | default(ansible_user_id, true) | default(lookup('env', 'USER')) }}"
+    _scm_actual_user: "{{ _scm_whoami_result.stdout }}"
+
+- name: initialize default role variables
+  set_fact:
+    _scm_url: "{{ scm_url | mandatory }}"
+    _scm_becoming: "{{ (_scm_actual_user != _scm_current_user or _scm_actual_user == 'root') | bool }}"
+    _scm_target_user: "{{ scm_target_user | default(_scm_current_user, true) }}"
+    _scm_target_user_home: "{{ scm_target_user_home | default('', true) }}"
+    _scm_target_path: "{{ scm_target_path | default('~/src', true) }}"
 
 - name: install system package for scm client
-  action:
-    module: '{{ansible_pkg_mgr}}'
-    name: '{{scm_packages[ansible_pkg_mgr][scm_type]}}'
+  package:
+    name: "{{ scm_packages[ansible_pkg_mgr][scm_type] }}"
     state: present
-  when: 'scm_packages[ansible_pkg_mgr][scm_type] is defined'
-  become: yes
-  ignore_errors: yes
+  when: scm_packages[ansible_pkg_mgr][scm_type] is defined
+  become: true
+  ignore_errors: "{{ not _scm_becoming }}"
+  # ^ Try to install if possible, ignore errors if we don't have permission.
 
 - name: create user for scm checkout
-  user: 
-    name: '{{_scm_target_user}}'
-    home: '{{_scm_target_user_home|default(omit,true)}}'
-    shell: '{{scm_targer_user_shell|default(omit,true)}}'
+  user:
+    name: "{{ _scm_target_user }}"
+    home: "{{ _scm_target_user_home | default(omit, true) }}"
+    shell: "{{ scm_targer_user_shell | default(omit, true) }}"
     state: present
   when: _scm_target_user != _scm_current_user
-  become: yes
-  ignore_errors: yes
+  become: true
+  ignore_errors: "{{ not _scm_becoming }}"
+  # ^ Try to install if possible, ignore errors if we don't have permission.
 
-- name: run included tasks with become
-  include: update.yml
+- name: run update tasks with become
+  import_tasks: update.yml
   when: _scm_target_user != _scm_current_user
-  become: yes
-  become_user: '{{_scm_target_user}}'
+  become: true
+  become_user: "{{ _scm_target_user }}"
 
-- name: run included tasks without become
-  include: update.yml
+- name: run update tasks without become
+  import_tasks: update.yml
+  become: false
   when: _scm_target_user == _scm_current_user

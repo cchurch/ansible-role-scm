@@ -4,10 +4,13 @@
 scm_type: git
 
 # http://server/repo or ssh://server/repo
-#scm_url: ''
+#scm_url: ""
 
 # branch/tag/revision/commit
-#scm_version: 'master'
+#scm_version: "master"
+
+# path to git/hg/svn command, will normally use binary paths
+#scm_executable: ""
 
 # true/false, pass force option to scm module
 scm_force: false
@@ -15,20 +18,47 @@ scm_force: false
 # true/false, completely delete scm_target_path before update
 scm_delete_on_update: false
 
-# only for svn
-#scm_username: ''
-
-# only for svn
-#scm_password: ''
-
 # true/false, only for git
 scm_accept_hostkey: true
 
-#scm_target_user: ''
-#scm_target_user_home: ''
-scm_targer_user_shell: '/bin/bash'
-#scm_target_path: '~/src'
+# integer >= 1, only for git
+#scm_depth: 1
 
-scm_packages: '{{scm_default_packages}}'
+# path to private key file, only for git
+#scm_key_file: ""
 
-#scm_notify_on_updated: ''
+# true/false, deletes untracked files, hg only
+#scm_purge: false
+
+# name to assign to remote when checking out, only for git
+#scm_remote: "origin"
+
+# true/false, whether submodules track latest commit, only for git
+#scm_track_submodules: false
+
+# true/false, whether to retrive new versions from the repo, only for git and hg
+#scm_update: true
+
+# true/false, whether to verify GPG commit, only for git
+#scm_verify_commit: false
+
+# only for svn
+#scm_username: ""
+
+# only for svn
+#scm_password: ""
+
+# true/false, export instead of checkout, only for svn
+#scm_export: false
+
+# true/false, call svn switch before update, only for svn
+#scm_switch: true
+
+#scm_target_user: ""
+#scm_target_user_home: ""
+scm_targer_user_shell: "/bin/bash"
+#scm_target_path: "~/src"
+
+scm_packages: "{{ scm_default_packages }}"
+
+#scm_notify_on_updated: ""

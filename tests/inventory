@@ -7,16 +7,15 @@ ansible_python_interpreter=/usr/bin/env python
 
 [containers]
 scm_amazon image="amazonlinux:latest"
-scm_arch image="base/archlinux"
+scm_arch image="archlinux/base"
 scm_centos6 image="centos:6"
 scm_centos7 image="centos:7"
-scm_debian7 image="debian:wheezy"
 scm_debian8 image="debian:jessie"
 scm_debian9 image="debian:stretch"
-#scm_fedora25 image="fedora:25"
-#scm_fedora26 image="fedora:26"
+scm_debian10 image="debian:buster"
 scm_ubuntu14 image="ubuntu:trusty"
 scm_ubuntu16 image="ubuntu:xenial"
+scm_ubuntu18 image="ubuntu:bionic"
 
 [containers:vars]
 ansible_connection=docker
@@ -29,7 +28,7 @@ scm_amazon
 scm_arch
 
 [arch:vars]
-ansible_python_interpreter=/usr/bin/python2
+ansible_python_interpreter=/usr/bin/python3
 
 [centos:children]
 centos6
@@ -42,12 +41,9 @@ scm_centos6
 scm_centos7
 
 [debian:children]
-debian7
 debian8
 debian9
-
-[debian7]
-scm_debian7
+debian10
 
 [debian8]
 scm_debian8
@@ -55,16 +51,19 @@ scm_debian8
 [debian9]
 scm_debian9
 
-#[fedora]
-#scm_fedora25
-#scm_fedora26
+[debian10]
+scm_debian10
 
 [ubuntu:children]
 ubuntu14
 ubuntu16
+ubuntu18
 
 [ubuntu14]
 scm_ubuntu14
 
 [ubuntu16]
 scm_ubuntu16
+
+[ubuntu18]
+scm_ubuntu18

@@ -3,57 +3,43 @@
 - name: launch docker containers
   hosts: containers
   gather_facts: false
-  roles:
-    - role: chrismeyersfsu.provision_docker
-      provision_docker_inventory_group:
-        - '{{inventory_hostname}}'
-      delegate_to: localhost
-
-- name: install epel on centos containers (based on geerlingguy.repo-epel)
-  hosts: containers:&centos
-  vars:
-    epel_repo_url: 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ansible_distribution_major_version}}.noarch.rpm'
-    epel_repo_gpg_key: '/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-{{ansible_distribution_major_version}}'
-    epel_repo_path: '/etc/yum.repos.d/epel.repo'
   tasks:
-    - name: check if epel repo is configured
-      stat:
-        path: '{{epel_repo_path}}'
-      register: epel_repo_path_result
-    - name: install epel repo
-      yum:
-        name: '{{epel_repo_url}}'
-        state: present
-      register: epel_repo_result
-      until: '"failed" not in epel_repo_result'
-      retries: 5
-      delay: 10
-      when: not epel_repo_path_result.stat.exists
-    - name: import epel gpg key when no keys exist (workaround rpm_key bug)
-      shell: rpm -q gpg-pubkey || rpm --import {{epel_repo_gpg_key|quote}}
-      when: not epel_repo_path_result.stat.exists
-    - name: import epel gpg key
-      rpm_key:
-        key: '{{epel_repo_gpg_key}}'
-        state: present
-      when: not epel_repo_path_result.stat.exists
+    - name: set flag whether to restart docker container
+      set_fact:
+        restart: "{{ provision_docker_restart | default(false) }}"
+    - import_role:
+        name: chrismeyersfsu.provision_docker
+      vars:
+        provision_docker_inventory_group:
+          - "{{ inventory_hostname }}"
+      delegate_to: localhost
 
 - name: check and install python on ubuntu/debian containers
   hosts: ubuntu:debian:&containers
   gather_facts: false
   tasks:
     - name: check for and install python
-      raw: test -e /usr/bin/python || (apt-get -y update && apt-get install -y python-minimal)
+      raw: >
+        test -e /usr/bin/python ||
+        (apt-get -y update &&
+        apt-get install -y python-minimal)
+      register: _check_python_result
+      changed_when: _check_python_result.stdout
     - name: install ca certificates
       apt:
         name: ca-certificates
 
-- name: check and install python2 on archlinux container
+- name: check and install python3 on archlinux container
   hosts: arch:&containers
   gather_facts: false
   tasks:
-    - name: check for and install python
-      raw: test -e /usr/bin/python2 || (/usr/bin/pacman --noconfirm -Sy archlinux-keyring && /usr/bin/pacman -S --noconfirm python2)
+    - name: check for and install python3
+      raw: >
+        test -e /usr/bin/python3 ||
+        (/usr/bin/pacman --noconfirm -Sy archlinux-keyring &&
+        /usr/bin/pacman -S --noconfirm python3)
+      register: _check_python_result
+      changed_when: _check_python_result.stdout
     - name: install ssh client
       pacman:
         name: openssh
@@ -74,7 +60,9 @@
         name: sudo
     - name: enable sudo with no password
       copy:
-        content: '%{{(ansible_os_family == "Debian")|ternary("sudo","wheel")}} ALL=(ALL) NOPASSWD: ALL'
+        content: >-
+          %{{ (ansible_os_family == 'Debian') | ternary('sudo', 'wheel') }}
+          ALL=(ALL) NOPASSWD: ALL
         dest: /etc/sudoers.d/sudo_nopasswd
         mode: 0440
         owner: root

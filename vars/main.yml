@@ -2,18 +2,18 @@
 
 scm_default_packages:
   yum:
-    git: 'git'
-    hg: 'mercurial'
-    svn: 'subversion'
+    git: "git"
+    hg: "mercurial"
+    svn: "subversion"
   apt:
-    git: 'git'
-    hg: 'mercurial'
-    svn: 'subversion'
+    git: "git"
+    hg: "mercurial"
+    svn: "subversion"
   pacman:
-    git: 'git'
-    hg: 'mercurial'
-    svn: 'subversion'
+    git: "git"
+    hg: "mercurial"
+    svn: "subversion"
   macports:
-    git: 'git'
-    hg: 'mercurial'
-    svn: 'subversion'
+    git: "git"
+    hg: "mercurial"
+    svn: "subversion"

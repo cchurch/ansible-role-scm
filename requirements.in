@@ -1,4 +1,6 @@
-ansible>=2.4,<2.5
+ansible
+ansible-lint
 bumpversion
-docker-py
+docker
+pip-tools
 tox
