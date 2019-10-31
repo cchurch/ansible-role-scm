@@ -5,6 +5,10 @@ scm_default_packages:
     git: "git"
     hg: "mercurial"
     svn: "subversion"
+  dnf:
+    git: "git"
+    hg: "mercurial"
+    svn: "subversion"
   apt:
     git: "git"
     hg: "mercurial"
