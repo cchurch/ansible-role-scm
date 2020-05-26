@@ -1,6 +1,6 @@
 ansible
 ansible-lint
-bumpversion
+bump2version
 docker
 pip-tools
 tox
