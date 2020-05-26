@@ -62,3 +62,8 @@ scm_targer_user_shell: "/bin/bash"
 scm_packages: "{{ scm_default_packages }}"
 
 #scm_notify_on_updated: ""
+
+# true/false; when enabled allows SSH_AUTH_SOCK (via ssh-agent forwarding) to
+# be used when becoming another user for SCM checkout.
+scm_ssh_agent_forwarding: false
+scm_ssh_auth_sock_sudoers_file: /etc/sudoers.d/ssh_auth_sock

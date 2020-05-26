@@ -39,6 +39,10 @@
   ignore_errors: "{{ not _scm_becoming }}"
   # ^ Try to install if possible, ignore errors if we don't have permission.
 
+- name: run ssh auth sock tasks
+  import_tasks: ssh_auth_sock.yml
+  when: scm_ssh_agent_forwarding and _scm_target_user != _scm_current_user
+
 - name: run update tasks with become
   import_tasks: update.yml
   when: _scm_target_user != _scm_current_user

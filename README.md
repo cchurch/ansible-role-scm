@@ -83,6 +83,12 @@ likely needed in most situations:
   appropriate privilege escalation is not available. There is normally no need
   to change this variable unless running on a system using a different
   `ansible_pkg_mgr` than `yum`, `apt`, `pacman` or `macports`.
+- `scm_ssh_agent_forwarding`: Boolean indicating whether to apply fixes to
+  allow SSH agent fowarding to work when `scm_target_user` is not the same
+  as `ansible_user`; role default is `false`.
+- `scm_ssh_auth_sock_sudoers_file`: File path to be added in `sudoers.d` when
+  `scm_ssh_agent_forwarding` fix is enabled; role default is
+  `"/etc/sudoers.d/ssh_auth_sock"`.
 
 The following variable may be defined for the play or role invocation (but will
 not work if defined as an inventory group or host variable):

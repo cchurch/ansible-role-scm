@@ -1,0 +1,37 @@
+---
+
+- name: enable ssh agent forwarding when using sudo
+  copy:
+    content: |
+      Defaults env_keep += "SSH_AUTH_SOCK"
+    dest: "{{ scm_ssh_auth_sock_sudoers_file }}"
+    mode: 0440
+    owner: root
+    group: root
+  become: true
+  ignore_errors: "{{ not _scm_becoming }}"
+  # ^ Try to install if possible, ignore errors if we don't have permission.
+
+- name: fetch SSH_AUTH_SOCK environment variable
+  shell: >-
+    test -n "${SSH_AUTH_SOCK}" && echo "$SSH_AUTH_SOCK" || echo ""
+  changed_when: false
+  register: _scm_ssh_auth_sock
+
+- name: set acl on ssh auth sock directory
+  acl:
+    path: "{{ _scm_ssh_auth_sock.stdout | dirname }}"
+    entity: "{{ _scm_target_user }}"
+    etype: user
+    permissions: x
+    state: present
+  when: _scm_ssh_auth_sock.stdout
+
+- name: set acl on ssh auth sock
+  acl:
+    path: "{{ _scm_ssh_auth_sock.stdout }}"
+    entity: "{{ _scm_target_user }}"
+    etype: user
+    permissions: rw
+    state: present
+  when: _scm_ssh_auth_sock.stdout
