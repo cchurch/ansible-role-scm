@@ -67,3 +67,8 @@ scm_packages: "{{ scm_default_packages }}"
 # be used when becoming another user for SCM checkout.
 scm_ssh_agent_forwarding: false
 scm_ssh_auth_sock_sudoers_file: /etc/sudoers.d/ssh_auth_sock
+
+# list of items to apply permission changes to before/after checkout; each item can
+# specify: path, state, owner, group, mode, recurse to pass to the file module.
+scm_pre_checkout_mods: []
+scm_post_checkout_mods: []

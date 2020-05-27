@@ -73,3 +73,13 @@
   set_fact:
     scm_update_result: "{{ _scm_update_result_svn }}"
   when: scm_type == 'svn'
+
+- name: apply file and directory permission changes after checkout
+  file:
+    path: "{{ item.path | default(item) }}"
+    state: "{{ item.state | default('directory') }}"
+    owner: "{{ item.owner | default(_scm_target_user) }}"
+    group: "{{ item.group | default(_scm_target_user) }}"
+    mode: "{{ item.mode | default(omit) }}"
+    recurse: "{{ item.recurse | default(omit) }}"
+  with_items: "{{ scm_post_checkout_mods }}"

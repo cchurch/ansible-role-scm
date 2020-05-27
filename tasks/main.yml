@@ -37,7 +37,20 @@
   when: _scm_target_user != _scm_current_user
   become: true
   ignore_errors: "{{ not _scm_becoming }}"
-  # ^ Try to install if possible, ignore errors if we don't have permission.
+  # ^ Try to create user if possible, ignore errors if we don't have permission.
+
+- name: apply file and directory permission changes before checkout
+  file:
+    path: "{{ item.path | default(item) }}"
+    state: "{{ item.state | default('directory') }}"
+    owner: "{{ item.owner | default(_scm_target_user) }}"
+    group: "{{ item.group | default(_scm_target_user) }}"
+    mode: "{{ item.mode | default(omit) }}"
+    recurse: "{{ item.recurse | default(omit) }}"
+  with_items: "{{ scm_pre_checkout_mods }}"
+  become: true
+  ignore_errors: "{{ not _scm_becoming }}"
+  # ^ Try to apply changes if possible, ignore errors if we don't have permission.
 
 - name: run ssh auth sock tasks
   import_tasks: ssh_auth_sock.yml
