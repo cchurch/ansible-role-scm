@@ -78,8 +78,12 @@
   file:
     path: "{{ item.path | default(item) }}"
     state: "{{ item.state | default('directory') }}"
+    src: "{{ item.src | default(omit) }}"
     owner: "{{ item.owner | default(_scm_target_user) }}"
     group: "{{ item.group | default(_scm_target_user) }}"
     mode: "{{ item.mode | default(omit) }}"
+    force: "{{ item.force | default(omit) }}"
+    follow: "{{ item.follow | default(omit) }}"
+    attributes: "{{ item.attributes | default(omit) }}"
     recurse: "{{ item.recurse | default(omit) }}"
   with_items: "{{ scm_post_checkout_mods }}"
