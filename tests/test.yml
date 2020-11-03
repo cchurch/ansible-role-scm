@@ -211,9 +211,7 @@
     test_scm_target_user_home: ""
     test_scm_version: default
     test_scm_alt_version: 3a22629b18529f05ca64428804bb6b0737733fd8
-  when: inventory_hostname not in ('scm_debian8', 'scm_ubuntu14')
-  # ^ Skipping platforms that currently fail, since hg is likely going away:
-  #   https://bitbucket.org/blog/sunsetting-mercurial-support-in-bitbucket
+  when: false  # Bitbucket has disabled hg support.
 
 - name: test svn https support as root user
   tags: [svn, https, root, svn-https, svn-https-root]
